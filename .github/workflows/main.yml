@@ -1,0 +1,42 @@
+yaml
+name: Build executable
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_update_notifications:
+        description: 'Include GitHub release checks when Wand starts'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web-panel/pnpm-lock.yaml
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          if ("${{ inputs.enable_update_notifications }}" -eq "true") {
+            ./build.ps1 -Configuration Release -EnableUpdateNotifications
+          } else {
+            ./build.ps1 -Configuration Release
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WandEnhancer
+          path: WandEnhancer/bin/Release/WandEnhancer.exe
